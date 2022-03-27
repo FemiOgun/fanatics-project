@@ -19,7 +19,6 @@ export default function CreateItem() {
   const router = useRouter()
 
   async function onChange(e) {
-    /* upload image to IPFS */
     const file = e.target.files[0]
     try {
       const added = await client.add(
@@ -37,14 +36,14 @@ export default function CreateItem() {
   async function uploadToIPFS() {
     const { name, description, price } = formInput
     if (!name || !description || !price || !fileUrl) return
-    /* first, upload metadata to IPFS */
+    /* first, upload to IPFS */
     const data = JSON.stringify({
       name, description, image: fileUrl
     })
     try {
       const added = await client.add(data)
       const url = `https://ipfs.infura.io/ipfs/${added.path}`
-      /* after metadata is uploaded to IPFS, return the URL to use it in the transaction */
+      /* after file is uploaded to IPFS, return the URL to use it in the transaction */
       return url
     } catch (error) {
       console.log('Error uploading file: ', error)
@@ -58,14 +57,14 @@ export default function CreateItem() {
     const provider = new ethers.providers.Web3Provider(connection)
     const signer = provider.getSigner()
 
-    /* create the NFT */
+    /* next, create the item */
     const price = ethers.utils.parseUnits(formInput.price, 'ether')
     let contract = new ethers.Contract(marketplaceAddress, NFTMarketplace.abi, signer)
     let listingPrice = await contract.getListingPrice()
     listingPrice = listingPrice.toString()
     let transaction = await contract.createToken(url, price, { value: listingPrice })
     await transaction.wait()
-
+   
     router.push('/')
   }
 
@@ -83,7 +82,7 @@ export default function CreateItem() {
           onChange={e => updateFormInput({ ...formInput, description: e.target.value })}
         />
         <input
-          placeholder="Asset Price in Matic"
+          placeholder="Asset Price in Eth"
           className="mt-2 border rounded p-4"
           onChange={e => updateFormInput({ ...formInput, price: e.target.value })}
         />
@@ -98,7 +97,7 @@ export default function CreateItem() {
             <img className="rounded mt-4" width="350" src={fileUrl} />
           )
         }
-        <button onClick={CreateItem} className="font-bold mt-4 bg-pink-500 text-white rounded p-4 shadow-lg">
+        <button onClick={listNFTForSale} className="font-bold mt-4 bg-pink-500 text-white rounded p-4 shadow-lg">
           Create NFT
         </button>
       </div>
